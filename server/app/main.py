@@ -1,6 +1,7 @@
 import asyncio
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
+from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 import os
 
@@ -13,6 +14,13 @@ async def get_fast(seconds: int):
     path = os.path.join(current_dir, 'image.jpg')
     await asyncio.sleep(seconds)
     return FileResponse(path)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 if __name__ == '__main__':
