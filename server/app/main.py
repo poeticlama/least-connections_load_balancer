@@ -22,6 +22,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# TODO: add port as argument from console
 
 if __name__ == '__main__':
     uvicorn.run('main:app', reload=True)
