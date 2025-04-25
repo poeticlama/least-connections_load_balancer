@@ -3,7 +3,7 @@ import os
 
 IP = '127.0.0.1'
 port = 8000
-PATH = '/speed/3'
+PATH = '/images/2'
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 path = os.path.join(current_dir, 'received_image.jpg')

@@ -1,1 +1,2 @@
 server/.venv
+server/app/__pycache__
