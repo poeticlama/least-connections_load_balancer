@@ -7,7 +7,7 @@
 body {
     padding: 0;
     margin: 0;
-    background-color: #79b579;
+    background: linear-gradient(0.25turn, #4db54d, #79b579, #4db54d);
 }
 
 .container {
@@ -43,9 +43,27 @@ button {
     background-color: white;
     color: #05a305;
     transition: 1s;
+    margin-bottom: 5vh;
 }
 
 button:hover {
     background-color: #05a305;
     color: white;
+}
+
+.picture {
+    height: 40vh;
+    width: 30vw;
+    background-color: white;
+    border-style: dashed;
+    border-width: 10px;
+    border-color: #cac7c3;
+    border-radius: 10px;
+    align-content: center;
+    justify-items: center;
+}
+
+.picture h1 {
+    font-size: 30px;
+    color: #cac7c3;
 }

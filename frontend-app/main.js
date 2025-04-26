@@ -1,3 +1,14 @@
-document.getElementById("download-button").addEventListener("click", () => {
-    
+const url = "127.0.0.1:8000"
+
+document.getElementById("main-button").addEventListener("click", async () => {
+    const image_num = Math.ceil(Math.random() * 4)
+    document.querySelector('.picture').children[0].innerHTML = 'Waiting for server response...'
+
+    const response = await fetch(new Request(url, {
+        method: "GET",
+        headers: {
+            "Image Number": image_num,
+        }
+    }))
+
 })
