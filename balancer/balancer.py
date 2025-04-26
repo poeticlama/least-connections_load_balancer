@@ -11,7 +11,7 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 path = os.path.join(current_dir, 'received_image.jpg')
 
 
-def least_connection():
+def least_connections():
     # Here is the place for main algorithm
     pass
 
@@ -24,10 +24,6 @@ def on_accept():
 
 def on_recv():
     # Some logic for sending a picture to the client
-    pass
-
-
-def least_connections():
     pass
 
 
@@ -62,11 +58,6 @@ def create_sockets():
     return sockets
 
 
-def handle_request(conn, address):
-    data = conn.recv(1024).decode()
-    number = int(data)
-
-
 def main():
     backend_sockets = create_sockets()
 
@@ -90,7 +81,8 @@ def main():
                 thread.start()
 
                 # # Some code to be placed in on_accept() function
-                # # Num is just an index of picture that we got from client
+                # # Variable "num" is just an index of picture that we got from client
+                #
                 # num = 2
                 # request = \
                 #     f'GET /images/{num} HTTP/1.1\r\n'\
