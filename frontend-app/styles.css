@@ -42,7 +42,7 @@ button {
     padding: 20px;
     background-color: white;
     color: #05a305;
-    transition: 1s;
+    transition: 500ms;
     margin-bottom: 5vh;
 }
 
