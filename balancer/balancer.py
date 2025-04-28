@@ -29,8 +29,7 @@ def handle_request(conn, address, backend_sockets):
     image_data = recv_response(server_socket)
 
     # Sending http response to a client
-    send_response(image_data)
-    pass
+    send_response(image_data, conn)
 
 
 def recv_request(conn, address):
@@ -72,6 +71,7 @@ def extract_image_number(http_request: bytes):
 def least_connections(backend_sockets):
     # Here is the place for main algorithm and after its execution
     # it returns backend_socket chosen
+    # TODO: add main algorithm
     return backend_sockets[0]
 
 
@@ -83,18 +83,6 @@ def send_request(server_socket, num):
         'Connection: close\r\n'\
         '\r\n'
     server_socket.sendall(request.encode('utf-8'))
-    response = b''
-    while True:
-        chunk = server_socket.recv(1024)
-        if not chunk:
-            break
-        response += chunk
-    header_end = response.find(b"\r\n\r\n")
-    headers = response[:header_end].decode()
-    image_data = response[header_end+4:]
-
-    with open(path, "wb") as f:
-        f.write(image_data)
 
 
 def recv_response(server_socket):
@@ -108,6 +96,9 @@ def recv_response(server_socket):
     header_end = response.find(b"\r\n\r\n")
     headers = response[:header_end].decode()
     image_data = response[header_end + 4:]
+
+    # TODO: check if image_data is enough to send http response with an image
+
     # Returning image_data (just because I have no idea what we should
     # send in http response)
 
@@ -116,9 +107,10 @@ def recv_response(server_socket):
     return image_data
 
 
-def send_response(image_data):
+def send_response(image_data, conn):
     # Sending a response to a client
     # Here we should somehow create a new http response with image_data
+    # TODO: create a response with an image we got
     pass
 
 
