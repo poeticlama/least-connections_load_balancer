@@ -11,19 +11,44 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 path = os.path.join(current_dir, 'received_image.jpg')
 
 
+def handle_request():
+    # Some pseudocode below to illustrate main idea
+    accept_client() # Accepting a new connection
+    recv_request() # Receiving http request
+    least_connections() # Choosing a server using main algorithm
+    send_request() # Sending request to this server
+    recv_response() # Handling response
+    send_response() # Sending http response to a client
+    pass
+
+
+def accept_client():
+    # Here is what we should do when we got a new connection from a client.
+    pass
+
+
+def recv_request():
+    # Some logic for working with a client request
+    pass
+
+
 def least_connections():
     # Here is the place for main algorithm
     pass
 
 
-def on_accept():
-    # Here is what we should do when we got a new response from a client.
-    # Somewhere here we should call our algorithm
+def send_request():
+    # Sending a request we got from a client to chosen server
     pass
 
 
-def on_recv():
-    # Some logic for sending a picture to the client
+def recv_response():
+    # Receiving a response from a server
+    pass
+
+
+def send_response():
+    # Sending a response to a client
     pass
 
 
@@ -75,7 +100,7 @@ def main():
 
                 # Implementing multithreading for different responses
                 thread = threading.Thread(
-                    target=on_accept,
+                    target=handle_request,
                     args=(conn, addr)
                 )
                 thread.start()
