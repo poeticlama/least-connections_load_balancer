@@ -26,6 +26,7 @@ document.getElementById("main-button").addEventListener("click", async () => {
         image.src = imageObjectURL
 
         // Appending an image to container
+        container.removeChild(container.children[0])
         container.appendChild(image)
     } else {
         console.log("HTTP-Error: " + response.status)
