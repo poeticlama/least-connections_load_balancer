@@ -5,50 +5,120 @@ import threading
 
 IP = '127.0.0.1'
 port = 8000
+BUFFER = 4096
 # PATH = '/images/2'
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 path = os.path.join(current_dir, 'received_image.jpg')
 
 
-def handle_request():
+def handle_request(conn, address, backend_sockets):
     # Some pseudocode below to illustrate main idea
-    accept_client() # Accepting a new connection
-    recv_request() # Receiving http request
-    least_connections() # Choosing a server using main algorithm
-    send_request() # Sending request to this server
-    recv_response() # Handling response
-    send_response() # Sending http response to a client
+
+    # Receiving http request and extract number from it
+    http_request = recv_request(conn, address)
+    num = extract_image_number(http_request)
+
+    # Choosing a server using main algorithm
+    server_socket = least_connections(backend_sockets)
+
+    # Sending request to this server
+    send_request(server_socket, num)
+
+    # Handling response
+    image_data = recv_response(server_socket)
+
+    # Sending http response to a client
+    send_response(image_data)
     pass
 
 
-def accept_client():
-    # Here is what we should do when we got a new connection from a client.
-    pass
-
-
-def recv_request():
+def recv_request(conn, address):
     # Some logic for working with a client request
-    pass
+
+    # Receiving from client until finish
+    http_request = b""
+    while True:
+        data = conn.recv(BUFFER)
+        if not data:    # Connection closed
+            break
+        http_request += data
+
+    # Returning a http request we got from a client
+    return http_request
 
 
-def least_connections():
-    # Here is the place for main algorithm
-    pass
+def extract_image_number(http_request: bytes):
+    try:
+        request_text = http_request.decode("utf-8")
+    except UnicodeDecodeError:
+        return None
+
+    headers_part, _, _ = request_text.partition("\r\n\r\n")
+    headers_lines = headers_part.split("\r\n")
+
+    for header in headers_lines[1:]:
+        if header.startswith("Image Number:"):
+            _, value = header.split(":", 1)
+            image_num_str = value.strip()
+            try:
+                return int(image_num_str)
+            except ValueError:
+                return None
+
+    return None
 
 
-def send_request():
+def least_connections(backend_sockets):
+    # Here is the place for main algorithm and after its execution
+    # it returns backend_socket chosen
+    return backend_sockets[0]
+
+
+def send_request(server_socket, num):
     # Sending a request we got from a client to chosen server
-    pass
+    request = \
+        f'GET /images/{num} HTTP/1.1\r\n'\
+        f'Host: {IP}:{port}\r\n'\
+        'Connection: close\r\n'\
+        '\r\n'
+    server_socket.sendall(request.encode('utf-8'))
+    response = b''
+    while True:
+        chunk = server_socket.recv(1024)
+        if not chunk:
+            break
+        response += chunk
+    header_end = response.find(b"\r\n\r\n")
+    headers = response[:header_end].decode()
+    image_data = response[header_end+4:]
+
+    with open(path, "wb") as f:
+        f.write(image_data)
 
 
-def recv_response():
+def recv_response(server_socket):
     # Receiving a response from a server
-    pass
+    response = b''
+    while True:
+        chunk = server_socket.recv(1024)
+        if not chunk:
+            break
+        response += chunk
+    header_end = response.find(b"\r\n\r\n")
+    headers = response[:header_end].decode()
+    image_data = response[header_end + 4:]
+    # Returning image_data (just because I have no idea what we should
+    # send in http response)
+
+    # with open(path, "wb") as f:
+    #     f.write(image_data)
+    return image_data
 
 
-def send_response():
+def send_response(image_data):
     # Sending a response to a client
+    # Here we should somehow create a new http response with image_data
     pass
 
 
@@ -101,33 +171,9 @@ def main():
                 # Implementing multithreading for different responses
                 thread = threading.Thread(
                     target=handle_request,
-                    args=(conn, addr)
+                    args=(conn, addr, backend_sockets)
                 )
                 thread.start()
-
-                # # Some code to be placed in on_accept() function
-                # # Variable "num" is just an index of picture that we got from client
-                #
-                # num = 2
-                # request = \
-                #     f'GET /images/{num} HTTP/1.1\r\n'\
-                #     f'Host: {IP}:{port}\r\n'\
-                #     'Connection: close\r\n'\
-                #     '\r\n'
-                # sock.sendall(request.encode('utf-8'))
-                # response = b''
-                # while True:
-                #     chunk = sock.recv(1024)
-                #     if not chunk:
-                #         break
-                #     response += chunk
-                # header_end = response.find(b"\r\n\r\n")
-                # headers = response[:header_end].decode()
-                # image_data = response[header_end+4:]
-                #
-                # with open(path, "wb") as f:
-                #     f.write(image_data)
-
         except:
             print("Error")
         finally:
