@@ -1,4 +1,4 @@
-const url = "127.0.0.1:8000"
+const url = "http://127.0.0.1:8000/images/2"
 
 document.getElementById("main-button").addEventListener("click", async () => {
     // Actions after clicking a button
@@ -11,12 +11,7 @@ document.getElementById("main-button").addEventListener("click", async () => {
     container.children[0].innerHTML = 'Waiting for server response...'
 
     // Sending a request to balancer
-    const response = await fetch(url, {
-        method: "GET",
-        headers: {
-            "Image Number": image_num,
-        }
-    })
+    const response = await fetch(url)
     if (response.status === 200) {
         // Getting an image
         const imageBlob = await response.blob()
