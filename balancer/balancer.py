@@ -155,7 +155,7 @@ def main():
                 # Implementing multithreading for different responses
                 thread = threading.Thread(
                     target=handle_request,
-                    args=(conn, addr, backend_sockets)
+                    args=(conn, backend_sockets)
                 )
                 thread.start()
         except:
