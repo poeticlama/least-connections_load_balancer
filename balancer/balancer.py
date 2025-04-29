@@ -44,13 +44,16 @@ def handle_request(conn, address, backend_sockets):
             b"Content-Type: text/plain\r\n\r\n"
             b"Server Error"
         )
-        conn.sendall(error_response)
+        # conn.sendall(error_response)
+        exit(0)
 
-    finally:
-        if server_socket:
-            with threading.Lock():
-                server_socket['connections'] -= 1
-        conn.close()
+    # finally:
+    #     if server_socket:
+    #         with threading.Lock():
+    #             server_socket['connections'] -= 1
+        
+        # conn.close()
+        
 
 
 def recv_request(conn, address):
@@ -68,27 +71,6 @@ def recv_request(conn, address):
     return http_request
 
 
-# def extract_image_number(http_request: bytes):
-#     try:
-#         request_text = http_request.decode("utf-8")
-#     except UnicodeDecodeError:
-#         return None
-
-#     headers_part, _, _ = request_text.partition("\r\n\r\n")
-#     headers_lines = headers_part.split("\r\n")
-
-#     for header in headers_lines[1:]:
-#         if header.startswith("Image Number:"):
-#             _, value = header.split(":", 1)
-#             image_num_str = value.strip()
-#             try:
-#                 return int(image_num_str)
-#             except ValueError:
-#                 return None
-
-#     return None
-
-
 def least_connections(backend_sockets):
     # Here is the place for main algorithm and after its execution
     # it returns backend_socket chosen
@@ -99,11 +81,14 @@ def least_connections(backend_sockets):
 def send_request(server_socket, http_request):
     # Sending a request we got from a client to chosen server
     try:
-        request_text = http_request.decode("utf-8")
+        request_text = http_request.decode()
+        print("Requst: ", request_text)
     except UnicodeDecodeError:
+        print("Unicode Error")
         return None
-    request = re.sub(r'Host: (\d+\.){3}\d+:\d+', f'Host: {server_socket['address']}', request_text)
-    server_socket['socket'].sendall(request.encode('utf-8'))
+    address = server_socket['address']
+    request = re.sub(r'Host: (\d+\.){3}\d+:\d+', f'Host: {address}', request_text)
+    server_socket['socket'].sendall(request.encode())
 
 
 def recv_response(server_socket):
@@ -114,24 +99,13 @@ def recv_response(server_socket):
         if not chunk:
             break
         response += chunk
-    header_end = response.find(b"\r\n\r\n")
-    headers = response[:header_end].decode()
-    image_data = response[header_end + 4:]
-
-    # TODO: check if image_data is enough to send http response with an image
-
-    # Returning image_data (just because I have no idea what we should
-    # send in http response)
-
-    # with open(path, "wb") as f:
-    #     f.write(image_data)
-    return image_data
+    print('Response: ', response)
+    return response
 
 
-def send_response(image_data, conn):
+def send_response(response, conn:socket.socket):
     # Sending a response to a client
     # Here we should somehow create a new http response with image_data
-    # TODO: create a response with an image we got
     if not response:
         # Add failures
         response = (
@@ -186,8 +160,8 @@ def main():
         # Some configuration for socket
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         sock.bind((IP, port))
+        
         sock.listen()
-
         try:
             while True:
                 # Accepting a new connection from client
@@ -199,7 +173,17 @@ def main():
                     args=(conn, addr, backend_sockets)
                 )
                 thread.start()
-        except:
+        except KeyboardInterrupt:
+            sock.close()
+            exit(0)
+        except Exception as e:
             print("Error")
+            print(str(e))
+            sock.close()
+            exit(0)
         finally:
             sock.close()
+
+
+if __name__ == '__main__':
+    main()
