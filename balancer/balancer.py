@@ -10,19 +10,22 @@ BUFFER = 4096
 
 def handle_request(conn, backend_sockets):
     try:
-        # Receiving http request and extract number from it
-        http_request = recv_request(conn)
+        with threading.Lock():
+            # Receiving http request and extract number from it
+            print("Handling request from socket: ", conn)
+            print(backend_sockets)
+            http_request = recv_request(conn)
 
-        # Choosing a server using main algorithm
-        server_socket = least_connections(backend_sockets)
+            # Choosing a server using main algorithm
+            server_socket = least_connections(backend_sockets)
 
-        server_socket['connections'] += 1
+            server_socket['connections'] += 1
 
-        # Sending request to this server
-        send_request(server_socket, http_request)
+            # Sending request to this server
+            send_request(server_socket, http_request)
 
-        # Handling response
-        recv_response(server_socket, conn)
+            # Handling and sending response
+            recv_response(server_socket, conn)
 
     except Exception as e:
         print(f"Error in request handling: {str(e)}")
@@ -126,6 +129,7 @@ def main():
             while True:
                 # Accepting a new connection from client
                 conn, addr = sock.accept()
+                print("Got new connection from client: ", addr[1])
 
                 # Implementing multithreading for different responses
                 thread = threading.Thread(
