@@ -114,7 +114,14 @@ def send_response(image_data, conn):
     # Sending a response to a client
     # Here we should somehow create a new http response with image_data
     # TODO: create a response with an image we got
-    pass
+    if not response:
+        # Add failures
+        response = (
+            b"HTTP/1.1 500 Internal Server Error\r\n"
+            b"Content-Type: text/plain\r\n\r\n"
+            b"Error loading image"
+        )
+    conn.sendall(response)
 
 
 def parse_args():
