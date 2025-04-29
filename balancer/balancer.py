@@ -2,6 +2,7 @@ import argparse
 import socket
 import os
 import threading
+import re
 
 IP = '127.0.0.1'
 port = 8000
@@ -17,13 +18,15 @@ def handle_request(conn, address, backend_sockets):
 
     # Receiving http request and extract number from it
     http_request = recv_request(conn, address)
-    num = extract_image_number(http_request)
+
+    # num = extract_image_number(http_request)
 
     # Choosing a server using main algorithm
     server_socket = least_connections(backend_sockets)
 
     # Sending request to this server
-    send_request(server_socket, num)
+    # send_request(server_socket, num)
+    send_request(server_socket, http_request)
 
     # Handling response
     image_data = recv_response(server_socket)
@@ -47,25 +50,25 @@ def recv_request(conn, address):
     return http_request
 
 
-def extract_image_number(http_request: bytes):
-    try:
-        request_text = http_request.decode("utf-8")
-    except UnicodeDecodeError:
-        return None
+# def extract_image_number(http_request: bytes):
+#     try:
+#         request_text = http_request.decode("utf-8")
+#     except UnicodeDecodeError:
+#         return None
 
-    headers_part, _, _ = request_text.partition("\r\n\r\n")
-    headers_lines = headers_part.split("\r\n")
+#     headers_part, _, _ = request_text.partition("\r\n\r\n")
+#     headers_lines = headers_part.split("\r\n")
 
-    for header in headers_lines[1:]:
-        if header.startswith("Image Number:"):
-            _, value = header.split(":", 1)
-            image_num_str = value.strip()
-            try:
-                return int(image_num_str)
-            except ValueError:
-                return None
+#     for header in headers_lines[1:]:
+#         if header.startswith("Image Number:"):
+#             _, value = header.split(":", 1)
+#             image_num_str = value.strip()
+#             try:
+#                 return int(image_num_str)
+#             except ValueError:
+#                 return None
 
-    return None
+#     return None
 
 
 def least_connections(backend_sockets):
@@ -75,21 +78,21 @@ def least_connections(backend_sockets):
     return servers[0]
 
 
-def send_request(server_socket, num):
+def send_request(server_socket, http_request):
     # Sending a request we got from a client to chosen server
-    request = \
-        f'GET /images/{num} HTTP/1.1\r\n'\
-        f'Host: {IP}:{port}\r\n'\
-        'Connection: close\r\n'\
-        '\r\n'
-    server_socket.sendall(request.encode('utf-8'))
+    try:
+        request_text = http_request.decode("utf-8")
+    except UnicodeDecodeError:
+        return None
+    request = re.sub(r'Host: (\d+\.){3}\d+:\d+', f'Host: {server_socket['address']}', request_text)
+    server_socket['socket'].sendall(request.encode('utf-8'))
 
 
 def recv_response(server_socket):
     # Receiving a response from a server
     response = b''
     while True:
-        chunk = server_socket.recv(1024)
+        chunk = server_socket['socket'].recv(BUFFER)
         if not chunk:
             break
         response += chunk
@@ -143,7 +146,8 @@ def create_sockets():
         # sockets.append(new_socket)
         sockets.append({
             'socket': new_socket,
-            'connections': 0
+            'connections': 0,
+            'address': f'{server_ip}:{server_port}'
         })
 
     return sockets
