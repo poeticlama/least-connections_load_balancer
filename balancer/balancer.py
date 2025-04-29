@@ -15,8 +15,8 @@ def handle_request(conn, backend_sockets):
 
         # Choosing a server using main algorithm
         server_socket = least_connections(backend_sockets)
-        with threading.Lock():
-            server_socket['connections'] += 1
+
+        server_socket['connections'] += 1
 
         # Sending request to this server
         send_request(server_socket, http_request)
@@ -45,11 +45,8 @@ def handle_request(conn, backend_sockets):
 
 def recv_request(conn):
     http_request = b""
-    while True:
-        data = conn.recv(BUFFER)
-        if not data:  # Connection closed
-            break
-        http_request += data
+    data = conn.recv(BUFFER)
+    http_request += data
 
     # Returning a http request we got from a client
     return http_request
@@ -67,6 +64,7 @@ def send_request(server_socket, http_request):
     except UnicodeDecodeError:
         return None
     request = re.sub(r'Host: (\d+\.){3}\d+:\d+', f'Host: {server_socket['address']}', request_text)
+    print(request)
     server_socket['socket'].sendall(request.encode('utf-8'))
 
 
@@ -85,6 +83,7 @@ def recv_response(server_socket):
 
 
 def send_response(image_data, conn):
+    print(conn)
     if not image_data:
         response = (
             b"HTTP/1.1 500 Internal Server Error\r\n"
@@ -94,11 +93,12 @@ def send_response(image_data, conn):
     else:
         response = (
                 b"HTTP/1.1 200 OK\r\n"
+                b"Access-Control-Allow-Origin: *\r\n"
                 b"Content-Type: image/jpeg\r\n"
                 b"Connection: close\r\n\r\n" +
                 image_data
         )
-
+    print(response)
     conn.sendall(response)
 
 
@@ -158,8 +158,8 @@ def main():
                     args=(conn, backend_sockets)
                 )
                 thread.start()
-        except:
-            print("Error")
+        except KeyboardInterrupt:
+            print("Shutting down...")
         finally:
             sock.close()
 
