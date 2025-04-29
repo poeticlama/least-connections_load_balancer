@@ -15,24 +15,42 @@ path = os.path.join(current_dir, 'received_image.jpg')
 
 def handle_request(conn, address, backend_sockets):
     # Some pseudocode below to illustrate main idea
+    server_socket = None
+    try:
+        # Receiving http request and extract number from it
+        http_request = recv_request(conn, address)
 
-    # Receiving http request and extract number from it
-    http_request = recv_request(conn, address)
+        # num = extract_image_number(http_request)
 
-    # num = extract_image_number(http_request)
+        # Choosing a server using main algorithm
+        server_socket = least_connections(backend_sockets)
+        with threading.Lock(): 
+            server_socket['connections'] += 1
 
-    # Choosing a server using main algorithm
-    server_socket = least_connections(backend_sockets)
+        # Sending request to this server
+        # send_request(server_socket, num)
+        send_request(server_socket, http_request)
 
-    # Sending request to this server
-    # send_request(server_socket, num)
-    send_request(server_socket, http_request)
+        # Handling response
+        image_data = recv_response(server_socket)
 
-    # Handling response
-    image_data = recv_response(server_socket)
+        # Sending http response to a client
+        send_response(image_data, conn)
 
-    # Sending http response to a client
-    send_response(image_data, conn)
+    except Exception as e:
+        print(f"Error in request handling: {str(e)}")
+        error_response = (
+            b"HTTP/1.1 500 Internal Server Error\r\n"
+            b"Content-Type: text/plain\r\n\r\n"
+            b"Server Error"
+        )
+        conn.sendall(error_response)
+
+    finally:
+        if server_socket:
+            with threading.Lock():
+                server_socket['connections'] -= 1
+        conn.close()
 
 
 def recv_request(conn, address):
