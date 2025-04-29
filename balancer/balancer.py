@@ -22,10 +22,7 @@ def handle_request(conn, backend_sockets):
         send_request(server_socket, http_request)
 
         # Handling response
-        image_data = recv_response(server_socket)
-
-        # Sending http response to a client
-        send_response(image_data, conn)
+        recv_response(server_socket, conn)
 
     except Exception as e:
         print(f"Error in request handling: {str(e)}")
@@ -68,7 +65,7 @@ def send_request(server_socket, http_request):
     server_socket['socket'].sendall(request.encode('utf-8'))
 
 
-def recv_response(server_socket):
+def recv_response(server_socket, conn):
     # Receiving a response from a server
     response = b''
     while True:
@@ -76,29 +73,7 @@ def recv_response(server_socket):
         if not chunk:
             break
         response += chunk
-    header_end = response.find(b"\r\n\r\n")
-    image_data = response[header_end + 4:]
 
-    return image_data
-
-
-def send_response(image_data, conn):
-    print(conn)
-    if not image_data:
-        response = (
-            b"HTTP/1.1 500 Internal Server Error\r\n"
-            b"Content-Type: text/plain\r\n\r\n"
-            b"Error loading image"
-        )
-    else:
-        response = (
-                b"HTTP/1.1 200 OK\r\n"
-                b"Access-Control-Allow-Origin: *\r\n"
-                b"Content-Type: image/jpeg\r\n"
-                b"Connection: Keep-Alive\r\n\r\n" +
-                image_data
-        )
-    print(response)
     conn.sendall(response)
 
 
