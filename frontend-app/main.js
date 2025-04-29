@@ -14,6 +14,7 @@ document.getElementById("main-button").addEventListener("click", async () => {
 
     // Sending a request to balancer
     const response = await fetch(image_url, {
+        method: 'GET',
         headers: {
             'Access-Control-Allow-Origin': '*',
         }
