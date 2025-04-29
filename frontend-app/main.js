@@ -1,5 +1,6 @@
 const url = "http://127.0.0.1:8000/images/2"
 
+
 document.getElementById("main-button").addEventListener("click", async () => {
     // Actions after clicking a button
 
