@@ -4,6 +4,7 @@ from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 import os
+import argparse
 
 app = FastAPI()
 
@@ -29,7 +30,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# TODO: add port as argument from console
 
 if __name__ == '__main__':
-    uvicorn.run('main:app', reload=True)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('port', type=int)
+    args = parser.parse_args()
+    uvicorn.run('main:app', reload=True, port=args.port)
