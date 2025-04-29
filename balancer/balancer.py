@@ -93,7 +93,6 @@ def send_response(image_data, conn):
     else:
         response = (
                 b"HTTP/1.1 200 OK\r\n"
-                b"Access-Control-Allow-Origin: *\r\n"
                 b"Content-Type: image/jpeg\r\n"
                 b"Connection: close\r\n\r\n" +
                 image_data
