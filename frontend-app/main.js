@@ -6,7 +6,7 @@ document.getElementById("main-button").addEventListener("click", async () => {
 
     // Randomly choosing a number of picture
     const image_num = Math.ceil(Math.random() * 4)
-    const image_url = url + image_num
+    const image_url = url + image_num + '?nocache=' + Date.now();
 
     // Changing text in image space
     let container = document.querySelector('.picture')
