@@ -13,12 +13,7 @@ document.getElementById("main-button").addEventListener("click", async () => {
     container.children[0].innerHTML = 'Waiting for server response...'
 
     // Sending a request to balancer
-    const response = await fetch(image_url, {
-        method: 'GET',
-        headers: {
-            'Access-Control-Allow-Origin': '*',
-        }
-    })
+    const response = await fetch(image_url)
     if (response.status === 200) {
         // Getting an image
         const imageBlob = await response.blob()

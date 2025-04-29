@@ -67,3 +67,7 @@ button:hover {
     font-size: 30px;
     color: #cac7c3;
 }
+
+.picture img {
+    object-fit: scale-down
+}
