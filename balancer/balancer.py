@@ -1,34 +1,24 @@
 import argparse
 import socket
-import os
 import threading
 import re
 
 IP = '127.0.0.1'
 port = 8000
 BUFFER = 4096
-# PATH = '/images/2'
-
-current_dir = os.path.dirname(os.path.abspath(__file__))
-path = os.path.join(current_dir, 'received_image.jpg')
 
 
-def handle_request(conn, address, backend_sockets):
-    # Some pseudocode below to illustrate main idea
-    server_socket = None
+def handle_request(conn, backend_sockets):
     try:
         # Receiving http request and extract number from it
-        http_request = recv_request(conn, address)
-
-        # num = extract_image_number(http_request)
+        http_request = recv_request(conn)
 
         # Choosing a server using main algorithm
         server_socket = least_connections(backend_sockets)
-        with threading.Lock(): 
-            server_socket['connections'] += 1
+
+        server_socket['connections'] += 1
 
         # Sending request to this server
-        # send_request(server_socket, num)
         send_request(server_socket, http_request)
 
         # Handling response
@@ -44,36 +34,25 @@ def handle_request(conn, address, backend_sockets):
             b"Content-Type: text/plain\r\n\r\n"
             b"Server Error"
         )
-        # conn.sendall(error_response)
-        exit(0)
+        conn.sendall(error_response)
 
-    # finally:
-    #     if server_socket:
-    #         with threading.Lock():
-    #             server_socket['connections'] -= 1
-        
-        # conn.close()
-        
+    finally:
+        if server_socket:
+            with threading.Lock():
+                server_socket['connections'] -= 1
+        conn.close()
 
 
-def recv_request(conn, address):
-    # Some logic for working with a client request
-
-    # Receiving from client until finish
+def recv_request(conn):
     http_request = b""
-    while True:
-        data = conn.recv(BUFFER)
-        if not data:    # Connection closed
-            break
-        http_request += data
+    data = conn.recv(BUFFER)
+    http_request += data
 
     # Returning a http request we got from a client
     return http_request
 
 
 def least_connections(backend_sockets):
-    # Here is the place for main algorithm and after its execution
-    # it returns backend_socket chosen
     servers = sorted(backend_sockets, key=lambda x: x['connections'])
     return servers[0]
 
@@ -81,14 +60,12 @@ def least_connections(backend_sockets):
 def send_request(server_socket, http_request):
     # Sending a request we got from a client to chosen server
     try:
-        request_text = http_request.decode()
-        print("Requst: ", request_text)
+        request_text = http_request.decode("utf-8")
     except UnicodeDecodeError:
-        print("Unicode Error")
         return None
-    address = server_socket['address']
-    request = re.sub(r'Host: (\d+\.){3}\d+:\d+', f'Host: {address}', request_text)
-    server_socket['socket'].sendall(request.encode())
+    request = re.sub(r'Host: (\d+\.){3}\d+:\d+', f'Host: {server_socket['address']}', request_text)
+    print(request)
+    server_socket['socket'].sendall(request.encode('utf-8'))
 
 
 def recv_response(server_socket):
@@ -99,20 +76,29 @@ def recv_response(server_socket):
         if not chunk:
             break
         response += chunk
-    print('Response: ', response)
-    return response
+    header_end = response.find(b"\r\n\r\n")
+    image_data = response[header_end + 4:]
+
+    return image_data
 
 
-def send_response(response, conn:socket.socket):
-    # Sending a response to a client
-    # Here we should somehow create a new http response with image_data
-    if not response:
-        # Add failures
+def send_response(image_data, conn):
+    print(conn)
+    if not image_data:
         response = (
             b"HTTP/1.1 500 Internal Server Error\r\n"
             b"Content-Type: text/plain\r\n\r\n"
             b"Error loading image"
         )
+    else:
+        response = (
+                b"HTTP/1.1 200 OK\r\n"
+                b"Access-Control-Allow-Origin: *\r\n"
+                b"Content-Type: image/jpeg\r\n"
+                b"Connection: Keep-Alive\r\n\r\n" +
+                image_data
+        )
+    print(response)
     conn.sendall(response)
 
 
@@ -142,7 +128,6 @@ def create_sockets():
         new_socket.connect((server_ip, server_port))
 
         # Appending to the list of sockets
-        # sockets.append(new_socket)
         sockets.append({
             'socket': new_socket,
             'connections': 0,
@@ -160,8 +145,8 @@ def main():
         # Some configuration for socket
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         sock.bind((IP, port))
-        
         sock.listen()
+
         try:
             while True:
                 # Accepting a new connection from client
@@ -170,17 +155,11 @@ def main():
                 # Implementing multithreading for different responses
                 thread = threading.Thread(
                     target=handle_request,
-                    args=(conn, addr, backend_sockets)
+                    args=(conn, backend_sockets)
                 )
                 thread.start()
         except KeyboardInterrupt:
-            sock.close()
-            exit(0)
-        except Exception as e:
-            print("Error")
-            print(str(e))
-            sock.close()
-            exit(0)
+            print("Shutting down...")
         finally:
             sock.close()
 
