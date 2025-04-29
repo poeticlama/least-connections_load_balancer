@@ -71,8 +71,8 @@ def extract_image_number(http_request: bytes):
 def least_connections(backend_sockets):
     # Here is the place for main algorithm and after its execution
     # it returns backend_socket chosen
-    # TODO: add main algorithm
-    return backend_sockets[0]
+    servers = sorted(backend_sockets, key=lambda x: x['connections'])
+    return servers[0]
 
 
 def send_request(server_socket, num):
@@ -140,7 +140,11 @@ def create_sockets():
         new_socket.connect((server_ip, server_port))
 
         # Appending to the list of sockets
-        sockets.append(new_socket)
+        # sockets.append(new_socket)
+        sockets.append({
+            'socket': new_socket,
+            'connections': 0
+        })
 
     return sockets
 
