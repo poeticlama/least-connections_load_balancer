@@ -1,6 +1,8 @@
 # Distributed Systems and Network Programming Course Project
 
-This project demonstrates basic principles of distributed systems and network programming. It includes a frontend application, multiple backend servers, and a load balancer using the Least Connections strategy.
+This project is implementation of load balancer with the Least Connections algorithm. It distributes HTTP requests from 
+frontend among different backend servers using Python sockets. This application configured on local machine, 
+all instances run on different ports.
 
 ## 📁 Project Structure
 
