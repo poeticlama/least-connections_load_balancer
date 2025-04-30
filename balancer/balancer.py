@@ -8,24 +8,23 @@ port = 8000
 BUFFER = 4096
 
 
-def handle_request(conn, backend_sockets):
+def handle_request(conn, backend_addresses, connection_counts):
+    backend_addr = None
     try:
+        # Receiving http request from client
+        print("Handling request from socket: ", conn)
+        http_request = recv_request(conn)
+
         with threading.Lock():
-            # Receiving http request and extract number from it
-            print("Handling request from socket: ", conn)
-            print(backend_sockets)
-            http_request = recv_request(conn)
+            # Choosing a server using algorithm
+            backend_addr = least_connections(backend_addresses, connection_counts)
+            connection_counts[backend_addr] += 1
 
-            # Choosing a server using main algorithm
-            server_socket = least_connections(backend_sockets)
+        # Sending request to this server
+        response = forward_to_backend(backend_addr, http_request)
 
-            server_socket['connections'] += 1
-
-            # Sending request to this server
-            send_request(server_socket, http_request)
-
-            # Handling and sending response
-            recv_response(server_socket, conn)
+        # Sending response
+        conn.sendall(response)
 
     except Exception as e:
         print(f"Error in request handling: {str(e)}")
@@ -37,9 +36,9 @@ def handle_request(conn, backend_sockets):
         conn.sendall(error_response)
 
     finally:
-        if server_socket:
+        if backend_addr:
             with threading.Lock():
-                server_socket['connections'] -= 1
+                connection_counts[backend_addr] -= 1
         conn.close()
 
 
@@ -52,32 +51,30 @@ def recv_request(conn):
     return http_request
 
 
-def least_connections(backend_sockets):
-    servers = sorted(backend_sockets, key=lambda x: x['connections'])
-    return servers[0]
+def least_connections(backend_addresses, connection_counts):
+    return sorted(backend_addresses, key=lambda addr: connection_counts[addr])[0]
 
 
-def send_request(server_socket, http_request):
-    # Sending a request we got from a client to chosen server
-    try:
-        request_text = http_request.decode("utf-8")
-    except UnicodeDecodeError:
-        return None
-    request = re.sub(r'Host: (\d+\.){3}\d+:\d+', f'Host: {server_socket['address']}', request_text)
-    print(request)
-    server_socket['socket'].sendall(request.encode('utf-8'))
+def forward_to_backend(backend_addr, http_request):
+    host, back_port = backend_addr.split(':')
+    back_port = int(back_port)
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as backend_sock:
+        backend_sock.connect((host, back_port))
 
+        # Sending a request to backend
+        request_text = http_request.decode("utf-8", errors='ignore')
+        request_text = re.sub(r'Host: (\d+\.){3}\d+:\d+', f'Host: {backend_addr}', request_text)
+        backend_sock.sendall(request_text.encode("utf-8"))
 
-def recv_response(server_socket, conn):
-    # Receiving a response from a server
-    response = b''
-    while True:
-        chunk = server_socket['socket'].recv(BUFFER)
-        if not chunk:
-            break
-        response += chunk
+        # Getting a response
+        response = b''
+        while True:
+            chunk = backend_sock.recv(BUFFER)
+            if not chunk:
+                break
+            response += chunk
 
-    conn.sendall(response)
+        return response
 
 
 def parse_args():
@@ -92,31 +89,9 @@ def parse_args():
     return back_addresses
 
 
-def create_sockets():
-    # Creating sockets from addresses we got
-    addresses = parse_args()
-    sockets = []
-
-    for addr in addresses:
-        server_ip, server_port = addr.split(":")
-        server_port = int(server_port)
-
-        # Creating a socket for corresponding backend address
-        new_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        new_socket.connect((server_ip, server_port))
-
-        # Appending to the list of sockets
-        sockets.append({
-            'socket': new_socket,
-            'connections': 0,
-            'address': f'{server_ip}:{server_port}'
-        })
-
-    return sockets
-
-
 def main():
-    backend_sockets = create_sockets()
+    backend_addresses = parse_args()
+    connection_counts = {addr: 0 for addr in backend_addresses}
 
     # Connect to frontend app
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
@@ -134,7 +109,7 @@ def main():
                 # Implementing multithreading for different responses
                 thread = threading.Thread(
                     target=handle_request,
-                    args=(conn, backend_sockets)
+                    args=(conn, backend_addresses, connection_counts)
                 )
                 thread.start()
         except KeyboardInterrupt:
