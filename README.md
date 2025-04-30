@@ -1,4 +1,4 @@
-# Distributed Systems and Network Programming Course Project
+#  Least-Connections Load Balancer (HTTP-based web service with a front-end load balancer distributing REST API calls)
 
 This project is implementation of load balancer with the Least Connections algorithm. It distributes HTTP requests from 
 frontend among different backend servers using Python sockets. This application configured on local machine, 
