@@ -2,6 +2,7 @@ import argparse
 import socket
 import threading
 import re
+from traffic_visualizer import plot_traffic
 
 IP = '127.0.0.1'
 port = 8000
@@ -101,6 +102,9 @@ def main():
         sock.listen()
 
         try:
+            # plot_traffic(connection_counts)
+            plot_thread = threading.Thread(target=plot_traffic, args=[connection_counts])
+            plot_thread.start()
             while True:
                 # Accepting a new connection from client
                 conn, addr = sock.accept()
