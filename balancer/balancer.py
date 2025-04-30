@@ -13,7 +13,8 @@ def handle_request(conn, backend_addresses, connection_counts):
     backend_addr = None
     try:
         # Receiving http request from client
-        print("Handling request from socket: ", conn)
+        client_addr = conn.getpeername()  # Getting ip and port
+        print(f"Handling request from: {client_addr[0]}:{client_addr[1]}")
         http_request = recv_request(conn)
 
         with threading.Lock():
@@ -24,8 +25,10 @@ def handle_request(conn, backend_addresses, connection_counts):
         # Sending request to this server
         response = forward_to_backend(backend_addr, http_request)
         print("Active connections:", connection_counts)
+
         # Sending response
         conn.sendall(response)
+        print("Response sent from ", backend_addr)
 
     except Exception as e:
         print(f"Error in request handling: {str(e)}")
@@ -99,10 +102,9 @@ def main():
         # Some configuration for socket
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         sock.bind((IP, port))
-        sock.listen()
+        sock.listen(100)
 
         try:
-            # plot_traffic(connection_counts)
             plot_thread = threading.Thread(target=plot_traffic, args=[connection_counts])
             plot_thread.start()
             while True:

@@ -9,10 +9,8 @@ def init_plot(servers: dict, ax):
     ax.set_ylabel('Connection')
     ax.set_ylim(bottom=0, top=20)
     addresses = []
-    connections = []
     for address, connection_num in servers.items():
         addresses.append(address)
-        # connections.append(connection_num)
     bars = ax.bar(addresses, [0]*len(servers))
     return bars
 
