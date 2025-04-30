@@ -53,7 +53,7 @@ button:hover {
 
 .picture {
     height: 40vh;
-    width: 30vw;
+    width: 25vw;
     background-color: white;
     border-style: dashed;
     border-width: 10px;
@@ -61,6 +61,7 @@ button:hover {
     border-radius: 10px;
     align-content: center;
     justify-items: center;
+    overflow: hidden;
 }
 
 .picture h1 {
@@ -69,5 +70,6 @@ button:hover {
 }
 
 .picture img {
-    object-fit: scale-down
+    height: 100%;
+    width: auto;
 }

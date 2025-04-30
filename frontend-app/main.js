@@ -25,6 +25,7 @@ document.getElementById("main-button").addEventListener("click", async () => {
         // Appending an image to container
         container.removeChild(container.children[0])
         container.appendChild(image)
+        container.style.border = 'none'
     } else {
         console.log("HTTP-Error: " + response.status)
         container.children[0].innerHTML = 'Error occurred, try again'
