@@ -6,7 +6,7 @@ document.getElementById("main-button").addEventListener("click", async () => {
 
     // Randomly choosing a number of picture
     const image_num = Math.ceil(Math.random() * 4)
-    const image_url = url + image_num
+    const image_url = url + image_num + '?nocache=' + Date.now();
 
     // Changing text in image space
     let container = document.querySelector('.picture')
@@ -25,6 +25,7 @@ document.getElementById("main-button").addEventListener("click", async () => {
         // Appending an image to container
         container.removeChild(container.children[0])
         container.appendChild(image)
+        container.style.border = 'none'
     } else {
         console.log("HTTP-Error: " + response.status)
         container.children[0].innerHTML = 'Error occurred, try again'
