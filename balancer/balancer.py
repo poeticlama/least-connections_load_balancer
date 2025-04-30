@@ -8,27 +8,32 @@ IP = '127.0.0.1'
 port = 8000
 BUFFER = 4096
 
+print_lock = threading.Lock()
+counts_lock = threading.Lock()
 
 def handle_request(conn, backend_addresses, connection_counts):
     backend_addr = None
     try:
         # Receiving http request from client
         client_addr = conn.getpeername()  # Getting ip and port
-        print(f"Handling request from: {client_addr[0]}:{client_addr[1]}")
+        with print_lock:
+            print(f"Handling request from: {client_addr[0]}:{client_addr[1]}")
         http_request = recv_request(conn)
 
-        with threading.Lock():
+        with counts_lock:
             # Choosing a server using algorithm
             backend_addr = least_connections(backend_addresses, connection_counts)
             connection_counts[backend_addr] += 1
 
         # Sending request to this server
         response = forward_to_backend(backend_addr, http_request)
-        print("Active connections:", connection_counts)
+        with print_lock:
+            print("Active connections:", connection_counts)
 
         # Sending response
         conn.sendall(response)
-        print("Response sent from ", backend_addr)
+        with print_lock:
+            print(f"Response sent from {backend_addr}, to {client_addr[0]}:{client_addr[1]}")
 
     except Exception as e:
         print(f"Error in request handling: {str(e)}")
@@ -41,7 +46,7 @@ def handle_request(conn, backend_addresses, connection_counts):
 
     finally:
         if backend_addr:
-            with threading.Lock():
+            with counts_lock:
                 connection_counts[backend_addr] -= 1
         conn.close()
 
@@ -110,7 +115,8 @@ def main():
             while True:
                 # Accepting a new connection from client
                 conn, addr = sock.accept()
-                print("Got new connection from client: ", addr[1])
+                with print_lock:
+                    print("Got new connection from client:", addr[1])
 
                 # Implementing multithreading for different responses
                 thread = threading.Thread(
