@@ -22,7 +22,7 @@ def handle_request(conn, backend_addresses, connection_counts):
 
         # Sending request to this server
         response = forward_to_backend(backend_addr, http_request)
-
+        print("Active connections:", connection_counts)
         # Sending response
         conn.sendall(response)
 
