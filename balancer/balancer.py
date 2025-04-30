@@ -28,7 +28,7 @@ def handle_request(conn, backend_addresses, connection_counts):
 
         # Sending response
         conn.sendall(response)
-        print("Response sent from ", backend_addr)
+        print(f"Response sent from {backend_addr}, to {client_addr[0]}:{client_addr[1]}")
 
     except Exception as e:
         print(f"Error in request handling: {str(e)}")
@@ -110,7 +110,7 @@ def main():
             while True:
                 # Accepting a new connection from client
                 conn, addr = sock.accept()
-                print("Got new connection from client: ", addr[1])
+                print("Got new connection from client:", addr[1])
 
                 # Implementing multithreading for different responses
                 thread = threading.Thread(
